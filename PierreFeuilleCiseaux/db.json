@@ -1,0 +1,24 @@
+{
+  "users": [
+    {
+      "id": "df9ad134-24e4-4166-803f-9cfc49da8b2e",
+      "username": "votre_nom_utilisateur",
+      "password": "votre_mot_de_passe"
+    },
+    {
+      "id": "c7c386d9-795e-4be2-9735-36b5ba224836",
+      "username": "votre_nom_utilisateur22",
+      "password": "votre_mot_de_passe22"
+    }
+  ],
+  "parties": [
+    {
+      "id": "4c9290dd-014a-491a-bc94-0d1627332bb3",
+      "createur": "c7c386d9-795e-4be2-9735-36b5ba224836",
+      "joueurs": [
+        "c7c386d9-795e-4be2-9735-36b5ba224836",
+        "df9ad134-24e4-4166-803f-9cfc49da8b2e"
+      ]
+    }
+  ]
+}
