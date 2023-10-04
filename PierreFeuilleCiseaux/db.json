@@ -13,12 +13,13 @@
   ],
   "parties": [
     {
-      "id": "4c9290dd-014a-491a-bc94-0d1627332bb3",
-      "createur": "c7c386d9-795e-4be2-9735-36b5ba224836",
+      "id": "f34df0b4-14db-430e-9fa1-5d1a5a4fd0a8",
+      "createur": "df9ad134-24e4-4166-803f-9cfc49da8b2e",
       "joueurs": [
-        "c7c386d9-795e-4be2-9735-36b5ba224836",
-        "df9ad134-24e4-4166-803f-9cfc49da8b2e"
-      ]
+        "df9ad134-24e4-4166-803f-9cfc49da8b2e",
+        "c7c386d9-795e-4be2-9735-36b5ba224836"
+      ],
+      "coups": {}
     }
   ]
 }
