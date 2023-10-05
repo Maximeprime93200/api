@@ -88,7 +88,8 @@ app.post('/jeu/creer-partie', (req, res) => {
   const nouvellePartie = {
     id: uuid.v4(),
     createur: userId, // L'ID de l'utilisateur qui crée la partie
-    joueurs: []
+    joueurs: [],
+    etat: 'en-attente', 
     // Autres informations sur la partie, comme les joueurs, le statut, etc.
   };
 
@@ -116,6 +117,7 @@ app.post('/jeu/rejoindre-partie/:partieId', (req, res) => {
     return res.status(404).json({ message: 'Partie non trouvée.' });
   }
 
+  partie.etat = 'en-cours'; 
   // Vérifiez si l'utilisateur est déjà connecté à la partie
   if (partie.joueurs.includes(userId)) {
     return res.status(400).json({ message: 'Vous êtes déjà connecté à cette partie.' });
@@ -133,6 +135,88 @@ app.post('/jeu/rejoindre-partie/:partieId', (req, res) => {
   fs.writeFileSync('db.json', JSON.stringify(dbData, null, 2));
 
   res.json({ message: 'Vous avez rejoint la partie avec succès.', partie });
+});
+
+app.post('/jeu/jouer-coup', (req, res) => {
+  const userId = req.session.userId;
+  const { partieId, choix } = req.body; // Le choix de l'utilisateur (pierre, papier ou ciseaux) et l'ID de la partie
+
+  // Chargez les données depuis le fichier db.json
+  const dbData = JSON.parse(fs.readFileSync('db.json'));
+
+  // Recherchez la partie en cours par son ID
+  const partieEnCours = dbData.parties.find((partie) => partie.id === partieId && partie.etat === 'en_cours');
+
+  if (!partieEnCours) {
+    return res.status(400).json({ message: "Partie en cours non trouvée." });
+  }
+
+  // Vérifiez si l'utilisateur fait partie de cette partie
+  if (!partieEnCours.joueurs.includes(userId)) {
+    return res.status(400).json({ message: "Vous ne faites pas partie de cette partie." });
+  }
+
+  // Vérifiez si c'est le tour de l'utilisateur pour jouer
+  if (partieEnCours.tourDe !== userId) {
+    return res.status(400).json({ message: "Ce n'est pas votre tour de jouer." });
+  }
+
+  // Enregistrez le choix de l'utilisateur dans l'objet de partie
+  partieEnCours.choixJoueur = choix;
+
+  // Passez au tour de l'autre joueur ou mettez fin à la partie, selon votre logique
+  if (partieEnCours.choixJoueur2) {
+    // Les deux joueurs ont joué, vous pouvez maintenant déterminer le résultat
+    const resultat = determinerResultat(partieEnCours.choixJoueur, partieEnCours.choixJoueur2);
+
+    // Mettez à jour le résultat de la partie
+    partieEnCours.resultat = resultat;
+
+    // Vous devrez également mettre à jour l'état de la partie (en attente, en cours, terminée) en fonction de votre logique
+  } else {
+    // C'est maintenant le tour du deuxième joueur
+    partieEnCours.tourDe = partieEnCours.joueurs.find((joueur) => joueur !== userId);
+  }
+
+  // Enregistrez les modifications dans le fichier db.json
+  fs.writeFileSync('db.json', JSON.stringify(dbData, null, 2));
+
+  res.json({ message: 'Coup joué avec succès.', partie: partieEnCours });
+});
+
+// Fonction pour déterminer le résultat en fonction des choix des joueurs
+function determinerResultat(choixJoueur1, choixJoueur2) {
+  if (choixJoueur1 === choixJoueur2) {
+    return 'égalité';
+  } else if (
+    (choixJoueur1 === 'pierre' && choixJoueur2 === 'ciseaux') ||
+    (choixJoueur1 === 'papier' && choixJoueur2 === 'pierre') ||
+    (choixJoueur1 === 'ciseaux' && choixJoueur2 === 'papier')
+  ) {
+    return 'victoire';
+  } else {
+    return 'défaite';
+  }
+}
+
+
+
+app.post('/jeu/terminer-partie/:partieId', (req, res) => {
+  const { partieId } = req.params;
+
+  const dbData = JSON.parse(fs.readFileSync('db.json'));
+
+  const partie = dbData.parties.find((p) => p.id === partieId);
+
+  if (!partie) {
+    return res.status(404).json({ message: 'Partie non trouvée.' });
+  }
+
+  partie.etat = 'terminee'; 
+
+  fs.writeFileSync('db.json', JSON.stringify(dbData, null, 2));
+
+  res.json({ message: 'La partie est terminée.', partie });
 });
 
 
