@@ -57,6 +57,7 @@ app.post('/utilisateur/inscription', (req, res) => {
 app.post('/utilisateur/connexion', (req, res) => {
   const { username, password } = req.body;
 
+  // Chargez les utilisateurs depuis le fichier db.json
   const dbData = JSON.parse(fs.readFileSync('db.json'));
 
   // Recherchez l'utilisateur par nom d'utilisateur et mot de passe
@@ -65,6 +66,8 @@ app.post('/utilisateur/connexion', (req, res) => {
   if (!user) {
     return res.status(401).json({ message: 'Nom d\'utilisateur ou mot de passe incorrect.' });
   }
+
+  // Stockez l'ID de l'utilisateur dans la session
   req.session.userId = user.id;
 
   res.json({ message: 'Connecté avec succès', userId: user.id });
@@ -84,9 +87,12 @@ app.post('/jeu/creer-partie', (req, res) => {
   // Créez une nouvelle partie
   const nouvellePartie = {
     id: uuid.v4(),
-    createur: userId, 
+    createur: userId, // L'ID de l'utilisateur qui crée la partie
     joueurs: [],
-    coups: {}
+    coups: {},
+    statut: 'partie_créée', 
+    historiqueVictoire: {}, 
+    // Autres informations sur la partie, comme les joueurs, le statut, etc.
   };
 
   // Ajoutez la nouvelle partie à la liste des parties dans les données chargées depuis le fichier db.json
@@ -125,6 +131,7 @@ app.post('/jeu/rejoindre-partie/:partieId', (req, res) => {
 
   // Ajoutez l'ID de l'utilisateur à la liste des joueurs de la partie
   partie.joueurs.push(userId);
+  partie.historiqueVictoire[userId] = 0;
 
   // Enregistrez les modifications dans le fichier db.json
   fs.writeFileSync('db.json', JSON.stringify(dbData, null, 2));
@@ -136,7 +143,6 @@ app.post('/jeu/rejoindre-partie/:partieId', (req, res) => {
 app.post('/jeu/faire-coup/:partieId', (req, res) => {
   const { partieId } = req.params;
   const userId = req.session.userId;
-  console.log(userId);
   const { coup } = req.body;
 
   // Chargez les données depuis le fichier db.json
@@ -161,21 +167,35 @@ app.post('/jeu/faire-coup/:partieId', (req, res) => {
 
   // Mettez à jour la partie avec le coup du joueur
   partie.coups[userId] = coup;
-
+  partie.statut = "partie_en_cours";
   // Enregistrez les modifications dans le fichier db.json
   fs.writeFileSync('db.json', JSON.stringify(dbData, null, 2));
 
   // Vérifiez si les deux joueurs ont fait un coup
   if (partie.coups[partie.joueurs[0]] && partie.coups[partie.joueurs[1]]) {
-    const gagnant = determineWinner(partie.coups[partie.joueurs[0]], partie.coups[partie.joueurs[1]]);
-    res.json({ message: 'Coup enregistré avec succès.', gagnant });
+    // Utilisez la fonction determineWinner pour déterminer le gagnant
+    const resultat = determineWinner(partie.joueurs[0], partie.joueurs[1], partie.coups[partie.joueurs[0]], partie.coups[partie.joueurs[1]]);
+    if (resultat == "match nul"){
+      console.log(partie.coups);
+      partie.coups = {};
+      console.log(partie.coups);
+      fs.writeFileSync('db.json', JSON.stringify(dbData, null, 2));
+      res.json({ message: 'Coups réinitialisé, relancez un coup et attendez le coup de l\'adversaire.', resultat: resultat, statut: partie.statut});
+    } else {
+      partie.statut = "partie_terminée";
+      partie.coups = {};
+      const compteur = parseInt(partie.historiqueVictoire[resultat], 10);
+      partie.historiqueVictoire[resultat] = compteur + 1;
+      fs.writeFileSync('db.json', JSON.stringify(dbData, null, 2));
+      res.json({ message: 'Il y a un vainqueur, coups réinitialisé vous pouvez rejouer', Gagnant :resultat, statut: partie.statut, historiqueVictoire: partie.historiqueVictoire});
+    }
   } else {
     // Si un seul coup a été fait, indiquez d'attendre le coup de l'adversaire
-    res.json({ message: 'Coup enregistré avec succès. Attendez le coup de l\'adversaire.' });
+    res.json({ message: 'Coup enregistré avec succès. Attendez le coup de l\'adversaire.', statut: partie.statut});
   }
 });
 
-function determineWinner(joueur1Coup, joueur2Coup) {
+function determineWinner(joueur1, joueur2, joueur1Coup, joueur2Coup) {
   if (joueur1Coup === joueur2Coup) {
     return "match nul";
   } else if (
@@ -183,16 +203,26 @@ function determineWinner(joueur1Coup, joueur2Coup) {
     (joueur1Coup === "ciseaux" && joueur2Coup === "papier") ||
     (joueur1Coup === "papier" && joueur2Coup === "pierre")
   ) {
-    return "joueur1";
+    return joueur1;
   } else {
-    return "joueur2";
+    return joueur2;
   }
 }
+
+// Endpoint pour la déconnexion
+app.post('/utilisateur/deconnexion', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Erreur lors de la déconnexion :', err);
+      return res.status(500).json({ message: 'Erreur lors de la déconnexion.' });
+    }
+    
+    res.json({ message: 'Déconnexion réussie.' });
+  });
+});
 
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
   console.log(`Serveur en cours d'exécution sur le port ${port}`);
 });
-
-console.log('Serveur en cours d\'exécution');
