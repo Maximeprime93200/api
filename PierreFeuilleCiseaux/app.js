@@ -165,9 +165,13 @@ app.post('/jeu/faire-coup/:partieId', (req, res) => {
     return res.status(400).json({ message: 'Vous avez déjà effectué un coup dans cette partie.' });
   }
 
-  // Mettez à jour la partie avec le coup du joueur
-  partie.coups[userId] = coup;
+  if (!(coup === "pierre" || coup === "papier" || coup === "ciseaux")) {
+    return res.status(400).json({ message: 'Coup invalide. Réessayez avec pierre, papier ou ciseaux', statut: partie.statut });
+  }
+
   partie.statut = "partie_en_cours";
+  partie.coups[userId] = coup;
+
   // Enregistrez les modifications dans le fichier db.json
   fs.writeFileSync('db.json', JSON.stringify(dbData, null, 2));
 
@@ -176,9 +180,7 @@ app.post('/jeu/faire-coup/:partieId', (req, res) => {
     // Utilisez la fonction determineWinner pour déterminer le gagnant
     const resultat = determineWinner(partie.joueurs[0], partie.joueurs[1], partie.coups[partie.joueurs[0]], partie.coups[partie.joueurs[1]]);
     if (resultat == "match nul"){
-      console.log(partie.coups);
       partie.coups = {};
-      console.log(partie.coups);
       fs.writeFileSync('db.json', JSON.stringify(dbData, null, 2));
       res.json({ message: 'Coups réinitialisé, relancez un coup et attendez le coup de l\'adversaire.', resultat: resultat, statut: partie.statut});
     } else {
