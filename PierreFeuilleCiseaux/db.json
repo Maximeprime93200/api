@@ -9,18 +9,33 @@
       "id": "c7c386d9-795e-4be2-9735-36b5ba224836",
       "username": "votre_nom_utilisateur22",
       "password": "votre_mot_de_passe22"
+    },
+    {
+      "id": "5eba0012-a342-4243-9878-74137bb9956b",
+      "username": "Thomas",
+      "password": "Thomas"
     }
   ],
   "parties": [
-    {},
     {
-      "id": "f6784eac-38d1-41fc-a9d4-5342159f2d36",
+      "id": "929442ce-a990-4655-812b-fc3fb1c15cd0",
       "createur": "c7c386d9-795e-4be2-9735-36b5ba224836",
       "joueurs": [
         "c7c386d9-795e-4be2-9735-36b5ba224836",
         "df9ad134-24e4-4166-803f-9cfc49da8b2e"
       ],
-      "etat": "en-cours"
+      "coups": {
+        "df9ad134-24e4-4166-803f-9cfc49da8b2e": "papier",
+        "c7c386d9-795e-4be2-9735-36b5ba224836": "pierre"
+      }
+    },
+    {
+      "id": "89355cf3-5b7e-4cc6-b3ca-0df761b61f56",
+      "createur": "c7c386d9-795e-4be2-9735-36b5ba224836",
+      "joueurs": [
+        "c7c386d9-795e-4be2-9735-36b5ba224836"
+      ],
+      "coups": {}
     }
   ]
 }
